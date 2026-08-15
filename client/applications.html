@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>JobHub - Employer Applications</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #fff8f0;
+            color: #222;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: white;
+            padding: 18px 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 15px rgba(0,0,0,.08);
+            gap: 20px;
+        }
+
+        .logo {
+            color: #ff7200;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: #ff7200;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        nav a:hover {
+            background: #fff0e2;
+        }
+
+        .logout-btn {
+            border: none;
+            background: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #111;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 45px auto;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 34px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 span {
+            color: #ff7200;
+        }
+
+        .subtitle {
+            color: #777;
+        }
+
+        .user-box {
+            background: #fff0e2;
+            border-left: 4px solid #ff7200;
+            padding: 15px 18px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        .application {
+            background: white;
+            padding: 25px;
+            margin-bottom: 18px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.07);
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .app-info h3 {
+            margin-bottom: 10px;
+        }
+
+        .app-info p {
+            color: #777;
+            margin: 7px 0;
+        }
+
+        .status {
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: capitalize;
+            white-space: nowrap;
+        }
+
+        .pending {
+            background: #fff2cc;
+            color: #946200;
+        }
+
+        .reviewing {
+            background: #e8f1ff;
+            color: #1769aa;
+        }
+
+        .accepted {
+            background: #e5f8ec;
+            color: #16803c;
+        }
+
+        .rejected {
+            background: #ffe7e7;
+            color: #c62828;
+        }
+
+        .actions {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #ff7200;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #e86600;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .empty {
+            background: white;
+            padding: 45px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,.07);
+        }
+
+        .empty p {
+            color: #777;
+            margin-top: 10px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            background: #ff7200;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .loading {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: #777;
+        }
+
+        .error {
+            color: #c62828;
+        }
+
+        .success {
+            color: #16803c;
+        }
+
+        @media(max-width:650px) {
+
+            nav {
+                padding: 15px 5%;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .nav-links {
+                width: 100%;
+            }
+
+            .container {
+                width: 92%;
+            }
+
+            .top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .status {
+                align-self: flex-start;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<nav>
+
+    <div class="logo">
+        JobHub
+    </div>
+
+    <div class="nav-links">
+
+        <a href="employer.html">
+            ← Dashboard
+        </a>
+
+        <a href="index.html">
+            Jobs
+        </a>
+
+        <button
+            class="logout-btn"
+            onclick="logout()">
+
+            Logout
+
+        </button>
+
+    </div>
+
+</nav>
+
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>
+            Job <span>Applications</span>
+        </h1>
+
+        <p class="subtitle">
+            Review applicants and update application status.
+        </p>
+
+    </div>
+
+
+    <div
+        id="userBox"
+        class="user-box">
+
+        Checking employer account...
+
+    </div>
+
+
+    <div id="applications">
+
+        <div class="loading">
+            Loading applications...
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+// ======================================================
+// API
+// ======================================================
+
+const API_URL = "http://127.0.0.1:8000";
+
+
+// ======================================================
+// AUTH
+// ======================================================
+
+function getToken() {
+
+    return localStorage.getItem("token");
+
+}
+
+
+function getUser() {
+
+    const data =
+        localStorage.getItem("user");
+
+    if (!data) {
+        return null;
+    }
+
+    try {
+
+        return JSON.parse(data);
+
+    } catch (error) {
+
+        console.error(
+            "Invalid user data",
+            error
+        );
+
+        return null;
+
+    }
+
+}
+
+
+// ======================================================
+// LOGOUT
+// ======================================================
+
+function logout() {
+
+    localStorage.removeItem("token");
+
+    localStorage.removeItem("access_token");
+
+    localStorage.removeItem("user");
+
+    window.location.href = "index.html";
+
+}
+
+
+// ======================================================
+// CHECK EMPLOYER
+// ======================================================
+
+function checkEmployer() {
+
+    const token = getToken();
+
+    const user = getUser();
+
+    const userBox =
+        document.getElementById("userBox");
+
+
+    if (!token || !user) {
+
+        userBox.innerHTML = `
+            <strong class="error">
+                Login required.
+            </strong>
+        `;
+
+        setTimeout(function() {
+
+            window.location.href =
+                "index.html";
+
+        }, 1000);
+
+        return false;
+    }
+
+
+    if (user.role !== "employer") {
+
+        userBox.innerHTML = `
+            <strong class="error">
+                Only employers can access this page.
+            </strong>
+        `;
+
+        setTimeout(function() {
+
+            window.location.href =
+                "index.html";
+
+        }, 1000);
+
+        return false;
+    }
+
+
+    userBox.innerHTML = `
+
+        <strong>
+            Employer: ${escapeHTML(user.name)}
+        </strong>
+
+        <br>
+
+        <span>
+            ${escapeHTML(user.email)}
+        </span>
+
+    `;
+
+
+    return true;
+
+}
+
+
+// ======================================================
+// LOAD APPLICATIONS
+// ======================================================
+
+async function loadApplications() {
+
+    const container =
+        document.getElementById(
+            "applications"
+        );
+
+
+    if (!checkEmployer()) {
+        return;
+    }
+
+
+    const token = getToken();
+
+
+    container.innerHTML = `
+
+        <div class="loading">
+            Loading applications...
+        </div>
+
+    `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/applications`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        let data;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            data = {
+                detail:
+                    "Invalid response from server."
+            };
+
+        }
+
+
+        // ==================================================
+        // AUTH ERROR
+        // ==================================================
+
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
+
+            alert(
+                data.detail ||
+                "Employer session expired."
+            );
+
+            logout();
+
+            return;
+        }
+
+
+        // ==================================================
+        // OTHER ERROR
+        // ==================================================
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail ||
+                "Unable to load applications."
+            );
+
+        }
+
+
+        // ==================================================
+        // EMPTY
+        // ==================================================
+
+        if (
+            !Array.isArray(data) ||
+            data.length === 0
+        ) {
+
+            container.innerHTML = `
+
+                <div class="empty">
+
+                    <h2>
+                        No Applications Yet
+                    </h2>
+
+                    <p>
+                        No one has applied for your jobs yet.
+                    </p>
+
+                    <a
+                        href="employer.html"
+                        class="back-btn">
+
+                        Back to Dashboard
+
+                    </a>
+
+                </div>
+
+            `;
+
+            return;
+        }
+
+
+        // ==================================================
+        // DISPLAY APPLICATIONS
+        // ==================================================
+
+        container.innerHTML = "";
+
+
+        data.forEach(function(application) {
+
+            const card =
+                document.createElement("div");
+
+
+            card.className =
+                "application";
+
+
+            const status =
+                application.status ||
+                "pending";
+
+
+            const safeStatus =
+                escapeHTML(status);
+
+
+            card.innerHTML = `
+
+                <div class="top">
+
+                    <div class="app-info">
+
+                        <h3>
+                            Application #${application.id}
+                        </h3>
+
+                        <p>
+                            <strong>
+                                Job ID:
+                            </strong>
+
+                            ${application.job_id}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Applicant ID:
+                            </strong>
+
+                            ${application.user_id}
+                        </p>
+
+                    </div>
+
+
+                    <span
+                        class="status ${safeStatus}">
+
+                        ${safeStatus}
+
+                    </span>
+
+                </div>
+
+
+                <div class="actions">
+
+                    <select
+                        id="status-${application.id}">
+
+                        <option
+                            value="pending"
+                            ${status === "pending" ? "selected" : ""}>
+
+                            Pending
+
+                        </option>
+
+                        <option
+                            value="reviewing"
+                            ${status === "reviewing" ? "selected" : ""}>
+
+                            Reviewing
+
+                        </option>
+
+                        <option
+                            value="accepted"
+                            ${status === "accepted" ? "selected" : ""}>
+
+                            Accepted
+
+                        </option>
+
+                        <option
+                            value="rejected"
+                            ${status === "rejected" ? "selected" : ""}>
+
+                            Rejected
+
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        id="update-${application.id}"
+                        onclick="updateStatus(${application.id})">
+
+                        Update Status
+
+                    </button>
+
+                </div>
+
+            `;
+
+
+            container.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        container.innerHTML = `
+
+            <div class="empty">
+
+                <h2 class="error">
+                    Unable to Load Applications
+                </h2>
+
+                <p>
+                    ${escapeHTML(error.message)}
+                </p>
+
+                <a
+                    href="employer.html"
+                    class="back-btn">
+
+                    Back to Dashboard
+
+                </a>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// ======================================================
+// UPDATE APPLICATION STATUS
+// ======================================================
+
+async function updateStatus(applicationId) {
+
+    const select =
+        document.getElementById(
+            `status-${applicationId}`
+        );
+
+
+    const button =
+        document.getElementById(
+            `update-${applicationId}`
+        );
+
+
+    if (!select || !button) {
+        return;
+    }
+
+
+    const token =
+        getToken();
+
+
+    if (!token) {
+
+        alert(
+            "Please login again."
+        );
+
+        logout();
+
+        return;
+    }
+
+
+    const status =
+        select.value;
+
+
+    button.disabled = true;
+
+    button.textContent =
+        "Updating...";
+
+
+    try {
+
+        const response =
+            await fetch(
+
+                `${API_URL}/applications/${applicationId}/status?status=${encodeURIComponent(status)}`,
+
+                {
+                    method: "PUT",
+
+                    headers: {
+
+                        "Authorization":
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+
+                    }
+                }
+
+            );
+
+
+        let data;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            data = {};
+
+        }
+
+
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
+
+            alert(
+                data.detail ||
+                "Employer session expired."
+            );
+
+            logout();
+
+            return;
+        }
+
+
+        if (!response.ok) {
+
+            alert(
+                data.detail ||
+                "Unable to update application status."
+            );
+
+            return;
+        }
+
+
+        alert(
+            "Application status updated successfully! ✅"
+        );
+
+
+        await loadApplications();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Cannot connect to JobHub backend."
+        );
+
+    } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            "Update Status";
+
+    }
+
+}
+
+
+// ======================================================
+// ESCAPE HTML
+// ======================================================
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    return String(value)
+
+        .replace(/&/g, "&amp;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// ======================================================
+// START
+// ======================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        loadApplications();
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>
