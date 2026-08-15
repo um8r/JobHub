@@ -37,7 +37,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="JobHub API",
     description="JobHub Full Stack Job Marketplace API",
-    version="2.0.0"
+    version="3.0.0"
 )
 
 
@@ -47,15 +47,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000"
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 
@@ -64,12 +59,10 @@ app.add_middleware(
 # ======================================================
 
 def get_db():
-
     db = SessionLocal()
 
     try:
         yield db
-
     finally:
         db.close()
 
@@ -80,21 +73,19 @@ def get_db():
 
 @app.get("/")
 def root():
-
     return {
         "message": "JobHub API is running",
         "status": "success",
-        "version": "2.0.0"
+        "version": "3.0.0"
     }
 
 
 # ======================================================
-# HEALTH CHECK
+# HEALTH
 # ======================================================
 
 @app.get("/health")
 def health_check():
-
     return {
         "status": "healthy",
         "message": "JobHub backend is working"
@@ -105,10 +96,7 @@ def health_check():
 # REGISTER
 # ======================================================
 
-@app.post(
-    "/register",
-    response_model=UserResponse
-)
+@app.post("/register", response_model=UserResponse)
 def register(
     user: UserCreate,
     db: Session = Depends(get_db)
@@ -119,28 +107,31 @@ def register(
     ).first()
 
     if existing_user:
-
         raise HTTPException(
             status_code=400,
             detail="Email already registered"
         )
 
-    if user.role not in [
+    role = str(user.role).lower().strip()
+
+    if role not in [
         "job_seeker",
         "jobseeker",
         "employer"
     ]:
-
         raise HTTPException(
             status_code=400,
             detail="Invalid role"
         )
 
+    if role == "jobseeker":
+        role = "job_seeker"
+
     new_user = User(
-        name=user.name,
-        email=user.email,
+        name=user.name.strip(),
+        email=user.email.strip().lower(),
         password=user.password,
-        role=user.role
+        role=role
     )
 
     db.add(new_user)
@@ -160,19 +151,19 @@ def login(
     db: Session = Depends(get_db)
 ):
 
+    email = credentials.email.strip().lower()
+
     user = db.query(User).filter(
-        User.email == credentials.email
+        User.email == email
     ).first()
 
     if not user:
-
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
     if user.password != credentials.password:
-
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
@@ -215,7 +206,6 @@ def get_me(
 
 # ======================================================
 # GET ALL JOBS
-# PUBLIC
 # ======================================================
 
 @app.get(
@@ -233,7 +223,6 @@ def get_jobs(
 
 # ======================================================
 # GET SINGLE JOB
-# PUBLIC
 # ======================================================
 
 @app.get(
@@ -250,7 +239,6 @@ def get_job(
     ).first()
 
     if not job:
-
         raise HTTPException(
             status_code=404,
             detail="Job not found"
@@ -275,30 +263,20 @@ def create_job(
 ):
 
     new_job = Job(
-
-        title=job.title,
-
-        company=job.company,
-
-        location=job.location,
-
-        description=job.description,
-
+        title=job.title.strip(),
+        company=job.company.strip(),
+        location=job.location.strip(),
+        description=job.description.strip(),
         requirements=job.requirements,
-
         salary=job.salary,
-
         job_type=job.job_type,
 
-        # IMPORTANT:
-        # Save the logged-in employer's ID
+        # IMPORTANT
         employer_id=current_user.id
     )
 
     db.add(new_job)
-
     db.commit()
-
     db.refresh(new_job)
 
     return new_job
@@ -321,17 +299,12 @@ def delete_job(
     ).first()
 
     if not job:
-
         raise HTTPException(
             status_code=404,
             detail="Job not found"
         )
 
-    # IMPORTANT:
-    # Employer can only delete their own job
-
     if job.employer_id != current_user.id:
-
         raise HTTPException(
             status_code=403,
             detail="You can only delete your own jobs"
@@ -344,7 +317,6 @@ def delete_job(
     )
 
     db.delete(job)
-
     db.commit()
 
     return {
@@ -368,10 +340,7 @@ def apply_for_job(
     current_user: User = Depends(require_job_seeker)
 ):
 
-    # User can only apply using own account
-
     if application.user_id != current_user.id:
-
         raise HTTPException(
             status_code=403,
             detail="You can only apply using your own account"
@@ -382,7 +351,6 @@ def apply_for_job(
     ).first()
 
     if not job:
-
         raise HTTPException(
             status_code=404,
             detail="Job not found"
@@ -394,25 +362,19 @@ def apply_for_job(
     ).first()
 
     if existing:
-
         raise HTTPException(
             status_code=400,
             detail="You already applied for this job"
         )
 
     new_application = Application(
-
         job_id=job_id,
-
         user_id=current_user.id,
-
         status="pending"
     )
 
     db.add(new_application)
-
     db.commit()
-
     db.refresh(new_application)
 
     return new_application
@@ -420,7 +382,6 @@ def apply_for_job(
 
 # ======================================================
 # USER APPLICATIONS
-# JOB SEEKER ONLY
 # ======================================================
 
 @app.get(
@@ -434,7 +395,6 @@ def get_user_applications(
 ):
 
     if user_id != current_user.id:
-
         raise HTTPException(
             status_code=403,
             detail="You can only view your own applications"
@@ -449,7 +409,7 @@ def get_user_applications(
 
 # ======================================================
 # EMPLOYER APPLICATIONS
-# EMPLOYER ONLY
+# ONLY APPLICATIONS FOR EMPLOYER'S JOBS
 # ======================================================
 
 @app.get(
@@ -461,21 +421,11 @@ def get_applications(
     current_user: User = Depends(require_employer)
 ):
 
-    # Get only applications belonging to
-    # jobs created by this employer.
-
     applications = (
         db.query(Application)
-        .join(
-            Job,
-            Application.job_id == Job.id
-        )
-        .filter(
-            Job.employer_id == current_user.id
-        )
-        .order_by(
-            Application.id.desc()
-        )
+        .join(Job, Application.job_id == Job.id)
+        .filter(Job.employer_id == current_user.id)
+        .order_by(Application.id.desc())
         .all()
     )
 
@@ -502,35 +452,28 @@ def update_application_status(
     ).first()
 
     if not application:
-
         raise HTTPException(
             status_code=404,
             detail="Application not found"
         )
-
-    # Get the job related to this application
 
     job = db.query(Job).filter(
         Job.id == application.job_id
     ).first()
 
     if not job:
-
         raise HTTPException(
             status_code=404,
             detail="Related job not found"
         )
 
-    # IMPORTANT:
-    # Employer can only update applications
-    # for their own jobs.
-
     if job.employer_id != current_user.id:
-
         raise HTTPException(
             status_code=403,
             detail="You can only manage applications for your own jobs"
         )
+
+    status = status.lower().strip()
 
     allowed_statuses = [
         "pending",
@@ -539,10 +482,7 @@ def update_application_status(
         "rejected"
     ]
 
-    status = status.lower().strip()
-
     if status not in allowed_statuses:
-
         raise HTTPException(
             status_code=400,
             detail="Invalid application status"
@@ -551,7 +491,6 @@ def update_application_status(
     application.status = status
 
     db.commit()
-
     db.refresh(application)
 
     return {
